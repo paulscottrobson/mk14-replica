@@ -1,0 +1,173 @@
+
+:function inline fetch() {
+:	$p0 = ($p0+1) & 0xFFFF;										// Bump PC, note deliberately wrong for speed.
+:	$mar = $p0;
+:	$read();
+:}
+
+:function inline eacIndex(%%pp) {
+:	if ($mbr == 0x80) $mbr = $e;								// E substitution.
+:	$t16 = (($mbr & 0x80) != 0) ? ($mbr | 0xFF00) : $mbr;		// Sign extend into T16
+:	$mar = (pp & 0xF000) | ((pp+$t16) & 0xFFF);					// 12 bit addition
+:}
+
+:rfunction inline eacAutoIndex(%%pp) {
+:	if ($mbr == 0x80) $mbr = $e;								// E substitution.
+:	if (($mbr & 0x80) == 0) {									// +ve offset
+:		$mar = pp;												// use address then increment
+:		$t16 = (pp & 0xF000) | ((pp+$t16) & 0xFFF);				// 12 bit addition
+:	} else {
+:		$t16 = (pp & 0xF000) | ((pp+$t16) & 0xFFF);				// 12 bit addition
+:		$mar = $t16;											// -ve offset decrement then use address.	
+:	}
+:	return $t16;
+:}
+
+// ***************************************************************************************************
+//								5.2.1 	Memory Reference Instructions
+// ***************************************************************************************************
+
+C0-C3 	18		"ld %d(p%p)"	$fetch();$eacIndex($p%p) ; $read() ; $a = $mbr
+C5-C7 	18 		"ld @%d(p%p)"	$fetch();$p%p = $eacAutoIndex($p%p) ; $read() ; $a = $mbr
+
+C8-CB 	18		"st %d(p%p)"	$fetch();$eacIndex($p%p) ; $mbr = $a ; $write()
+CD-CF 	18 		"st @%d(p%p)"	$fetch();$p%p = $eacAutoIndex($p%p) ; $mbr = $a ; $write()
+
+D0-D3 	18		"and %d(p%p)"	$fetch();$eacIndex($p%p) ; $read() ; $a = $a & $mbr
+D5-D7 	18 		"and @%d(p%p)"	$fetch();$p%p = $eacAutoIndex($p%p) ; $read() ; $a = $a & $mbr
+
+D8-DB 	18		"or %d(p%p)"	$fetch();$eacIndex($p%p) ; $read() ; $a = $a | $mbr
+DD-DF 	18 		"or @%d(p%p)"	$fetch();$p%p = $eacAutoIndex($p%p) ; $read() ; $a = $a & $mbr
+
+E0-E3 	18		"xor %d(p%p)"	$fetch();$eacIndex($p%p) ; $read() ; $a = $a ^ $mbr
+E5-E7 	18 		"xor @%d(p%p)"	$fetch();$p%p = $eacAutoIndex($p%p) ; $read() ; $a = $a & $mbr
+
+:function decimalAdd() {
+:	$t16 = ($mbr & 0x0F) + ($a & 0x0F) + $cyl;					// Calculate lower digit
+:	if ($t16 > 9) {												// Overflow out of lower digit
+:		$t16 = $t16 + 6;	
+:	}	
+:	$t16 = $t16 + ($mbr & 0xF0) + ($a & 0xF0);					// Calculate upper digit
+:	$cyl = 0;
+:	if ($t16 > 0x99) {											// Overflow out of upper digit
+:		$cyl = 1;
+:		$t16 = $t16 + 0x60;
+:	}
+:	$a = ($t16 & 0xFF);
+:}
+
+E8-EB 	23		"dad %d(p%p)"	$fetch();$eacIndex($p%p) ; $read() ; $decimalAdd()
+ED-EF 	23 		"dad @%d(p%p)"	$fetch();$p%p = $eacAutoIndex($p%p) ; $read() ; $decimalAdd()
+
+:function inline binaryAdd() {
+:	$t16 = $a + $mbr + $cyl;									// Result
+:	$overflow = 0;
+:	if ((($a ^ $mbr) & 0x80) == 0) {							// Overflow set if inputs have same sign, diff in result.
+:		if ((($a ^ $t16) & 0x80) != 0) $overflow = 1;			// Comment this calculation if you don't need overflow.
+:	}
+:	$a = ($t16 & 0xFF);
+:	$cyl = ($t16 >> 8) & 1;	
+:}
+
+F0-F3 	19		"add %d(p%p)"	$fetch();$eacIndex($p%p) ; $read() ; $binaryAdd()
+F5-F7 	19 		"add @%d(p%p)"	$fetch();$p%p = $eacAutoIndex($p%p) ; $read() ; $binaryAdd()
+
+F8-FB 	20		"cad %d(p%p)"	$fetch();$eacIndex($p%p) ; $read() ; $mbr = $mbr ^ 0xFF ; $binaryAdd()
+FD-FF 	20 		"cad @%d(p%p)"	$fetch();$p%p = $eacAutoIndex($p%p) ; $read() ; $mbr = $mbr ^ 0xFF ; $binaryAdd()
+
+// ***************************************************************************************************
+//							5.2.2 Memory Increment/Decrement instructions
+// ***************************************************************************************************
+
+A8-AB 	22 		"ild %d(p%p)"	$eacIndex($p%p) ; $read() ; $mbr = ($mbr + 1) & 0xFF; $write() ; $a = $mbr
+B8-BB 	22 		"dld %d(p%p)"	$eacIndex($p%p) ; $read() ; $mbr = ($mbr + 0xFF) & 0xFF; $write() ; $a = $mbr
+
+// ***************************************************************************************************
+//									5.2.3 Immediate Instructions
+// ***************************************************************************************************
+
+C4 		10 		"ldi %c"		$fetch() ; $a = $mbr
+D4 		10 		"ani %c"		$fetch() ; $a = $a & $mbr
+DC 		10 		"ori %c"		$fetch() ; $a = $a | $mbr
+E4 		10 		"xri %c"		$fetch() ; $a = $a ^ $mbr
+EC 		15 		"dai %c"		$fetch() ; $decimalAdd()
+F4 		11 		"adi %c"		$fetch() ; $binaryAdd()
+FC 		12 		"cai %c"		$fetch() ; $mbr = $mbr ^ 0xFF;$binaryAdd()
+
+// ***************************************************************************************************
+//									5.2.4 Transfer instructions
+// ***************************************************************************************************
+
+:function inline jumpIndex(%%pp) {
+:	$t16 = (($mbr & 0x80) != 0) ? ($mbr | 0xFF00) : $mbr;		// Sign extend into T16
+:	$mar = (pp & 0xF000) | ((pp+$t16) & 0xFFF);					// 12 bit addition
+:}
+
+90-93 	11 		"jmp %j"		$fetch();$jumpIndex($p%p) ; $p0 = $mar
+94-97 	10 		"jp %j"			$fetch();$jumpIndex($p%p) ; if (($a & 0x80) == 0) $p0 = $mar
+98-9B 	10 		"jz %j"			$fetch();$jumpIndex($p%p) ; if ($a == 0) $p0 = $mar
+9C-9F 	10 		"jnz %j"		$fetch();$jumpIndex($p%p) ; if ($a != 0) $p0 = $mar
+
+// ***************************************************************************************************
+//								5.2.5 Extension Register Instructions
+// ***************************************************************************************************
+
+40 		6 		"lde"			$a = $e
+01 		7 		"xae"			$t16 = $a;$a = $e;$e = $t16
+50 		6 		"ane"			$a = $a & $e
+58 		6 		"ore"			$a = $a | $e
+60 		6 		"xre"			$a = $a ^ $e
+68 		11 		"dae"			$mbr = $e ; $decimalAdd()
+70 		7 		"ade"			$mbr = $e ; $binaryAdd()
+78 		8 		"cae"			$mbr = $e ^ 0xFF; $binaryAdd()
+
+// ***************************************************************************************************
+//							     5.2.6 	Pointer Register Move Instructions
+// ***************************************************************************************************
+
+30-33 	8 		"xpal p%p"		$t16 = $p%p;$p%p = ($p%p & 0xFF00) | $a;$a = $t16 & 0xFF
+
+34-37 	8 		"xpah p%p"		$t16 = $p%p;$p%p = ($p%p & 0x00FF) | ($a << 8);$a = ($t16 >> 8) & 0xFF
+
+3C-3F 	7 		"xppc p%p"		$t16 = $p0;$p0 = $p%p;$p%p = $t16
+
+// ***************************************************************************************************
+//								5.2.7 Shift, Rotate, Serial I/O Instructions
+// ***************************************************************************************************
+
+19 		5 		"sio"			$io_sout($e & 1);$e = $e >> 1;if ($io_sin() != 0) $e |= 0x80;
+
+1C 		5 		"sr"			$a = ($a >> 1) & 0x7F
+
+1D 		5 		"srl"			$a = (($a >> 1) & 0x7F) | ($cyl << 7)
+
+1E 		5 		"rr"			$a = (($a >> 1) | ($a << 7)) & 0xFF
+
+1F 		5 		"rrl"			$t16 = $a | ($cyl << 8);$cyl = $a & 1;$a = ($t16 >> 1) & 0xFF
+
+// ***************************************************************************************************
+//								    5.2.8  	Miscellaneous Instructions
+// ***************************************************************************************************
+
+:function correctStatusRegister() {
+:	$status = $status & 0x0F;
+:	if ($io_sensea()) $status = $status | 0x10;	
+:	if ($io_senseb()) $status = $status | 0x20;	
+:	if ($overflow != 0) $status = $status | 0x40;	
+:	if ($cyl != 0) $status = $status | 0x80;	
+:}
+
+00 		8 		"halt" 			;
+
+02 		5 		"ccl"			$cyl = 0
+03 		5 		"scl"			$cyl = 1
+
+05 		6		"ien"			$status = $status | 0x08
+04 		6 		"dint"			$status = $status & 0xF7
+
+06 		5 		"csa"			$correctStatusRegister();$a = $status
+07 		6 		"cas"			$status = $a;$io_flags($a & 7);$cyl = ($a>>7) & 1;$overflow = ($a>>6) & 1;$correctStatusRegister()
+
+08 		5 		"nop"			;
+
+8F 		13 		"dly %c"		$fetch();$delaycyclesfour = (2 * $a + (2 + 512)*$mbr)/4;$a = 0
