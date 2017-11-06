@@ -15,6 +15,9 @@
 #include "hardware.h"
 #include "gfx.h"																
 
+static BYTE8 segment[16];
+static BYTE8 blankCount[16];
+
 // *******************************************************************************************************************************
 //											Hardware Reset
 // *******************************************************************************************************************************
@@ -29,12 +32,40 @@ void HWIReset(void) {
 void HWIEndFrame() {
 }
 
+// *******************************************************************************************************************************
+//										  Test for key pressed
+// *******************************************************************************************************************************
+
+static BYTE8 HWIIsKeyPressed(char key) {
+	// Keys tested are 0-9 A-F (G)o (M)em (T)erm and Q for Abort (because we already have an 'A')
+	return GFXIsKeyPressed(key);
+}
 
 // *******************************************************************************************************************************
-//										Intercept keyboard processing
+//											Read keyboard row
 // *******************************************************************************************************************************
 
-int HWIProcessKey(int key,int runMode) {
-	return key;
+static const char *row8 = "01234567";
+static const char *row4 = "89------";
+static const char *row2 = "--GMQ--T";
+static const char *row1 = "ABCD--EF";
+
+BYTE8 HWIReadKeyRow(BYTE8 row) {
+	if (row > 7) return 0xFF;
+	BYTE8 r = 0;
+	if (HWIIsKeyPressed(row8[row])) r |= 0x80;
+	if (HWIIsKeyPressed(row4[row])) r |= 0x40;
+	if (HWIIsKeyPressed(row2[row])) r |= 0x20;
+	if (HWIIsKeyPressed(row1[row])) r |= 0x10;
+	return r ^ 0xFF;
+}
+
+void HWIWriteSegment(BYTE8 digit,BYTE8 data) {
+	segment[digit] = data;
+	blankCount[digit] = 5;
+}
+
+BYTE8 HWIReadSegment(BYTE8 digit) {
+	return segment[digit];
 }
 

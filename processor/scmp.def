@@ -1,8 +1,8 @@
 
 :function inline fetch() {
-:	$p0 = ($p0+1) & 0xFFFF;										// Bump PC, note deliberately wrong for speed.
+:	$p0 = ($p0+1) & 0xFFFF;									// Bump PC, note deliberately wrong for speed.
 :	$mar = $p0;
-:	$read();
+:	$pcread();
 :}
 
 :function inline eacIndex(%%pp) {
@@ -11,13 +11,19 @@
 :	$mar = (pp & 0xF000) | ((pp+$t16) & 0xFFF);					// 12 bit addition
 :}
 
+
+:function inline eacBasicIndex(%%pp) {
+:	$t16 = (($mbr & 0x80) != 0) ? ($mbr | 0xFF00) : $mbr;		// Sign extend into T16
+:	$mar = (pp & 0xF000) | ((pp+$t16) & 0xFFF);					// 12 bit addition
+:}
+
 :rfunction inline eacAutoIndex(%%pp) {
 :	if ($mbr == 0x80) $mbr = $e;								// E substitution.
 :	if (($mbr & 0x80) == 0) {									// +ve offset
 :		$mar = pp;												// use address then increment
-:		$t16 = (pp & 0xF000) | ((pp+$t16) & 0xFFF);				// 12 bit addition
+:		$t16 = (pp & 0xF000) | ((pp+$mbr) & 0xFFF);				// 12 bit addition
 :	} else {
-:		$t16 = (pp & 0xF000) | ((pp+$t16) & 0xFFF);				// 12 bit addition
+:		$t16 = (pp & 0xF000) | ((pp+($mbr|0xFF00)) & 0xFFF);	// 12 bit addition
 :		$mar = $t16;											// -ve offset decrement then use address.	
 :	}
 :	return $t16;
@@ -79,8 +85,8 @@ FD-FF 	20 		"cad @%d(p%p)"	$fetch();$p%p = $eacAutoIndex($p%p) ; $read() ; $mbr 
 //							5.2.2 Memory Increment/Decrement instructions
 // ***************************************************************************************************
 
-A8-AB 	22 		"ild %d(p%p)"	$eacIndex($p%p) ; $read() ; $mbr = ($mbr + 1) & 0xFF; $write() ; $a = $mbr
-B8-BB 	22 		"dld %d(p%p)"	$eacIndex($p%p) ; $read() ; $mbr = ($mbr + 0xFF) & 0xFF; $write() ; $a = $mbr
+A8-AB 	22 		"ild %d(p%p)"	$fetch(); $eacBasicIndex($p%p) ; $read() ; $mbr = ($mbr + 1) & 0xFF; $write() ; $a = $mbr
+B8-BB 	22 		"dld %d(p%p)"	$fetch(); $eacBasicIndex($p%p) ; $read() ; $mbr = ($mbr + 0xFF) & 0xFF; $write() ; $a = $mbr
 
 // ***************************************************************************************************
 //									5.2.3 Immediate Instructions
@@ -98,15 +104,11 @@ FC 		12 		"cai %c"		$fetch() ; $mbr = $mbr ^ 0xFF;$binaryAdd()
 //									5.2.4 Transfer instructions
 // ***************************************************************************************************
 
-:function inline jumpIndex(%%pp) {
-:	$t16 = (($mbr & 0x80) != 0) ? ($mbr | 0xFF00) : $mbr;		// Sign extend into T16
-:	$mar = (pp & 0xF000) | ((pp+$t16) & 0xFFF);					// 12 bit addition
-:}
 
-90-93 	11 		"jmp %j"		$fetch();$jumpIndex($p%p) ; $p0 = $mar
-94-97 	10 		"jp %j"			$fetch();$jumpIndex($p%p) ; if (($a & 0x80) == 0) $p0 = $mar
-98-9B 	10 		"jz %j"			$fetch();$jumpIndex($p%p) ; if ($a == 0) $p0 = $mar
-9C-9F 	10 		"jnz %j"		$fetch();$jumpIndex($p%p) ; if ($a != 0) $p0 = $mar
+90-93 	11 		"jmp %j"		$fetch();$eacBasicIndex($p%p) ; $p0 = $mar
+94-97 	10 		"jp %j"			$fetch();$eacBasicIndex($p%p) ; if (($a & 0x80) == 0) $p0 = $mar
+98-9B 	10 		"jz %j"			$fetch();$eacBasicIndex($p%p) ; if ($a == 0) $p0 = $mar
+9C-9F 	10 		"jnz %j"		$fetch();$eacBasicIndex($p%p) ; if ($a != 0) $p0 = $mar
 
 // ***************************************************************************************************
 //								5.2.5 Extension Register Instructions

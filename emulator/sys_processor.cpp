@@ -21,8 +21,8 @@
 
 static BYTE8 ramMemory[RAMSIZE];													// RAM memory
 
-static BYTE8 a,e,status,cyl,overflow,mar;
-static WORD16 p0,p1,p2,p3,t16,mbr;
+static BYTE8 a,e,status,cyl,overflow,mbr;
+static WORD16 p0,p1,p2,p3,t16,mar;
 
 static BYTE8 interruptRequest;
 static WORD16 cycles;
@@ -32,8 +32,24 @@ static WORD16 delaycyclesfour;
 //													Memory read and write macros.
 // *******************************************************************************************************************************
 
-#define read() 		mbr = ramMemory[(mar) & MEMORYMASK]
-#define write() 	ramMemory[(mar) & MEMORYMASK] = mbr
+#define pcread() 	mbr = ramMemory[(mar) & MEMORYMASK]
+
+static void write() {
+ 	if ((mar & 0xF00) == 0xF00) {
+		ramMemory[(mar) & MEMORYMASK] = mbr;
+		return;
+	}
+ 	if ((mar & 0xD00) == 0xD00) {
+ 		HWIWriteSegment(mar & 0xFF,mbr);
+ 	}
+}
+
+static void read() {
+	mbr = ramMemory[(mar) & MEMORYMASK];
+	if ((mar & 0xF00) == 0xD00) {
+		mbr = HWIReadKeyRow(mar & 0x0F);
+	}
+}
 
 // *******************************************************************************************************************************
 //														I/O Port connections
@@ -54,14 +70,6 @@ void CPUReset(void) {
 	cycles = 0;delaycyclesfour = 0;
 	interruptRequest = 0;
 	HWIReset();
-
-	ramMemory[0] = 0x08;
-	ramMemory[1] = 0xC4;
-	ramMemory[2] = 0x40;
-	ramMemory[3] = 0xF4;
-	ramMemory[4] = 0x40;
-	ramMemory[5] = 0x90;
-	ramMemory[6] = 0xFC;
 }
 
 // *******************************************************************************************************************************
@@ -79,16 +87,6 @@ void CPUInterruptRequest(void) {
 }
 
 // *******************************************************************************************************************************
-//												  Execute single opcode
-// *******************************************************************************************************************************
-
-static void CPUExecuteOneOpcode(BYTE8 opcode) {
-	switch(opcode) {																// Do the selected opcode and phase.
-		#include "_scmp_case.h"
-	}
-}
-
-// *******************************************************************************************************************************
 //											Execute a single instruction phase
 // *******************************************************************************************************************************
 
@@ -98,19 +96,22 @@ static void CPUExecuteOneOpcode(BYTE8 opcode) {
 BYTE8 CPUExecuteInstruction(void) {
 
 	if (delaycyclesfour != 0) {														// DLY in progress
-		if (cycles/4 < delaycyclesfour) {											// Not enough cycles
-			delaycyclesfour = delaycyclesfour - cycles / 4;
+		WORD16 remCycles = CYCLES_PER_FRAME - cycles;								// Cycles left this frame
+		if (remCycles/4 < delaycyclesfour) {										// Not enough cycles
+			delaycyclesfour = delaycyclesfour - remCycles / 4;
 			cycles = 0;
 			return FRAME_RATE;
 		} else {																	// enough this time.
-			cycles = cycles - delaycyclesfour * 4;
+			cycles = cycles + delaycyclesfour * 4;
 			delaycyclesfour = 0;
 		}
 	}
 
-	mar = p0 = (p0+1) & 0xFFFF;
-	read();
-	CPUExecuteOneOpcode(mbr);
+	fetch();
+	pcread();
+	switch(mbr) {																	// Do the selected opcode and phase.
+		#include "_scmp_case.h"
+	}
 
 	if (cycles < CYCLES_PER_FRAME) return 0;										// Frame in progress, return 0.
 	cycles -= CYCLES_PER_FRAME;														// Adjust cycle counter

@@ -26,7 +26,7 @@ typedef unsigned char  BYTE8;
 typedef unsigned int   LONG32;
 
 #define RAMSIZE 	(4096)															// RAM we have installed
-#define MEMORYMASK	(RAMSIZE-1)
+#define MEMORYMASK	(0xFFF)
 
 #define DEFAULT_BUS_VALUE (0xFF)													// What's on the bus if it's not memory.
 

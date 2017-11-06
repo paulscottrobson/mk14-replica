@@ -2,10 +2,14 @@ abstract class SCMPGenerated extends SCMPBase {
 private fetch() : void {
  this.p0 = (this.p0+1) & 0xFFFF;
  this.mar = this.p0;
- this.read();
+ this.pcread();
 }
 private eacIndex(pp:number) : void {
  if (this.mbr == 0x80) this.mbr = this.e;
+ this.t16 = ((this.mbr & 0x80) != 0) ? (this.mbr | 0xFF00) : this.mbr;
+ this.mar = (pp & 0xF000) | ((pp+this.t16) & 0xFFF);
+}
+private eacBasicIndex(pp:number) : void {
  this.t16 = ((this.mbr & 0x80) != 0) ? (this.mbr | 0xFF00) : this.mbr;
  this.mar = (pp & 0xF000) | ((pp+this.t16) & 0xFFF);
 }
@@ -13,9 +17,9 @@ private eacAutoIndex(pp:number) : number {
  if (this.mbr == 0x80) this.mbr = this.e;
  if ((this.mbr & 0x80) == 0) {
   this.mar = pp;
-  this.t16 = (pp & 0xF000) | ((pp+this.t16) & 0xFFF);
+  this.t16 = (pp & 0xF000) | ((pp+this.mbr) & 0xFFF);
  } else {
-  this.t16 = (pp & 0xF000) | ((pp+this.t16) & 0xFFF);
+  this.t16 = (pp & 0xF000) | ((pp+(this.mbr|0xFF00)) & 0xFFF);
   this.mar = this.t16;
  }
  return this.t16;
@@ -41,10 +45,6 @@ private binaryAdd() : void {
  }
  this.a = (this.t16 & 0xFF);
  this.cyl = (this.t16 >> 8) & 1;
-}
-private jumpIndex(pp:number) : void {
- this.t16 = ((this.mbr & 0x80) != 0) ? (this.mbr | 0xFF00) : this.mbr;
- this.mar = (pp & 0xF000) | ((pp+this.t16) & 0xFFF);
 }
 private correctStatusRegister() : void {
  this.status = this.status & 0x0F;
@@ -340,37 +340,37 @@ private opcode_8e():void { ;; };
 
 private opcode_8f():void { this.fetch();this.delaycyclesfour = (2 * this.a + (2 + 512)*this.mbr)/4;this.a = 0;this.cycles = this.cycles + 13; };
 
-private opcode_90():void { this.fetch();this.jumpIndex(this.p0) ; this.p0 = this.mar;this.cycles = this.cycles + 11; };
+private opcode_90():void { this.fetch();this.eacBasicIndex(this.p0) ; this.p0 = this.mar;this.cycles = this.cycles + 11; };
 
-private opcode_91():void { this.fetch();this.jumpIndex(this.p1) ; this.p0 = this.mar;this.cycles = this.cycles + 11; };
+private opcode_91():void { this.fetch();this.eacBasicIndex(this.p1) ; this.p0 = this.mar;this.cycles = this.cycles + 11; };
 
-private opcode_92():void { this.fetch();this.jumpIndex(this.p2) ; this.p0 = this.mar;this.cycles = this.cycles + 11; };
+private opcode_92():void { this.fetch();this.eacBasicIndex(this.p2) ; this.p0 = this.mar;this.cycles = this.cycles + 11; };
 
-private opcode_93():void { this.fetch();this.jumpIndex(this.p3) ; this.p0 = this.mar;this.cycles = this.cycles + 11; };
+private opcode_93():void { this.fetch();this.eacBasicIndex(this.p3) ; this.p0 = this.mar;this.cycles = this.cycles + 11; };
 
-private opcode_94():void { this.fetch();this.jumpIndex(this.p0) ; if ((this.a & 0x80) == 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
+private opcode_94():void { this.fetch();this.eacBasicIndex(this.p0) ; if ((this.a & 0x80) == 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
 
-private opcode_95():void { this.fetch();this.jumpIndex(this.p1) ; if ((this.a & 0x80) == 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
+private opcode_95():void { this.fetch();this.eacBasicIndex(this.p1) ; if ((this.a & 0x80) == 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
 
-private opcode_96():void { this.fetch();this.jumpIndex(this.p2) ; if ((this.a & 0x80) == 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
+private opcode_96():void { this.fetch();this.eacBasicIndex(this.p2) ; if ((this.a & 0x80) == 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
 
-private opcode_97():void { this.fetch();this.jumpIndex(this.p3) ; if ((this.a & 0x80) == 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
+private opcode_97():void { this.fetch();this.eacBasicIndex(this.p3) ; if ((this.a & 0x80) == 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
 
-private opcode_98():void { this.fetch();this.jumpIndex(this.p0) ; if (this.a == 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
+private opcode_98():void { this.fetch();this.eacBasicIndex(this.p0) ; if (this.a == 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
 
-private opcode_99():void { this.fetch();this.jumpIndex(this.p1) ; if (this.a == 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
+private opcode_99():void { this.fetch();this.eacBasicIndex(this.p1) ; if (this.a == 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
 
-private opcode_9a():void { this.fetch();this.jumpIndex(this.p2) ; if (this.a == 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
+private opcode_9a():void { this.fetch();this.eacBasicIndex(this.p2) ; if (this.a == 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
 
-private opcode_9b():void { this.fetch();this.jumpIndex(this.p3) ; if (this.a == 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
+private opcode_9b():void { this.fetch();this.eacBasicIndex(this.p3) ; if (this.a == 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
 
-private opcode_9c():void { this.fetch();this.jumpIndex(this.p0) ; if (this.a != 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
+private opcode_9c():void { this.fetch();this.eacBasicIndex(this.p0) ; if (this.a != 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
 
-private opcode_9d():void { this.fetch();this.jumpIndex(this.p1) ; if (this.a != 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
+private opcode_9d():void { this.fetch();this.eacBasicIndex(this.p1) ; if (this.a != 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
 
-private opcode_9e():void { this.fetch();this.jumpIndex(this.p2) ; if (this.a != 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
+private opcode_9e():void { this.fetch();this.eacBasicIndex(this.p2) ; if (this.a != 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
 
-private opcode_9f():void { this.fetch();this.jumpIndex(this.p3) ; if (this.a != 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
+private opcode_9f():void { this.fetch();this.eacBasicIndex(this.p3) ; if (this.a != 0) this.p0 = this.mar;this.cycles = this.cycles + 10; };
 
 private opcode_a0():void { ;; };
 
@@ -388,13 +388,13 @@ private opcode_a6():void { ;; };
 
 private opcode_a7():void { ;; };
 
-private opcode_a8():void { this.eacIndex(this.p0) ; this.read() ; this.mbr = (this.mbr + 1) & 0xFF; this.write() ; this.a = this.mbr;this.cycles = this.cycles + 22; };
+private opcode_a8():void { this.fetch(); this.eacBasicIndex(this.p0) ; this.read() ; this.mbr = (this.mbr + 1) & 0xFF; this.write() ; this.a = this.mbr;this.cycles = this.cycles + 22; };
 
-private opcode_a9():void { this.eacIndex(this.p1) ; this.read() ; this.mbr = (this.mbr + 1) & 0xFF; this.write() ; this.a = this.mbr;this.cycles = this.cycles + 22; };
+private opcode_a9():void { this.fetch(); this.eacBasicIndex(this.p1) ; this.read() ; this.mbr = (this.mbr + 1) & 0xFF; this.write() ; this.a = this.mbr;this.cycles = this.cycles + 22; };
 
-private opcode_aa():void { this.eacIndex(this.p2) ; this.read() ; this.mbr = (this.mbr + 1) & 0xFF; this.write() ; this.a = this.mbr;this.cycles = this.cycles + 22; };
+private opcode_aa():void { this.fetch(); this.eacBasicIndex(this.p2) ; this.read() ; this.mbr = (this.mbr + 1) & 0xFF; this.write() ; this.a = this.mbr;this.cycles = this.cycles + 22; };
 
-private opcode_ab():void { this.eacIndex(this.p3) ; this.read() ; this.mbr = (this.mbr + 1) & 0xFF; this.write() ; this.a = this.mbr;this.cycles = this.cycles + 22; };
+private opcode_ab():void { this.fetch(); this.eacBasicIndex(this.p3) ; this.read() ; this.mbr = (this.mbr + 1) & 0xFF; this.write() ; this.a = this.mbr;this.cycles = this.cycles + 22; };
 
 private opcode_ac():void { ;; };
 
@@ -420,13 +420,13 @@ private opcode_b6():void { ;; };
 
 private opcode_b7():void { ;; };
 
-private opcode_b8():void { this.eacIndex(this.p0) ; this.read() ; this.mbr = (this.mbr + 0xFF) & 0xFF; this.write() ; this.a = this.mbr;this.cycles = this.cycles + 22; };
+private opcode_b8():void { this.fetch(); this.eacBasicIndex(this.p0) ; this.read() ; this.mbr = (this.mbr + 0xFF) & 0xFF; this.write() ; this.a = this.mbr;this.cycles = this.cycles + 22; };
 
-private opcode_b9():void { this.eacIndex(this.p1) ; this.read() ; this.mbr = (this.mbr + 0xFF) & 0xFF; this.write() ; this.a = this.mbr;this.cycles = this.cycles + 22; };
+private opcode_b9():void { this.fetch(); this.eacBasicIndex(this.p1) ; this.read() ; this.mbr = (this.mbr + 0xFF) & 0xFF; this.write() ; this.a = this.mbr;this.cycles = this.cycles + 22; };
 
-private opcode_ba():void { this.eacIndex(this.p2) ; this.read() ; this.mbr = (this.mbr + 0xFF) & 0xFF; this.write() ; this.a = this.mbr;this.cycles = this.cycles + 22; };
+private opcode_ba():void { this.fetch(); this.eacBasicIndex(this.p2) ; this.read() ; this.mbr = (this.mbr + 0xFF) & 0xFF; this.write() ; this.a = this.mbr;this.cycles = this.cycles + 22; };
 
-private opcode_bb():void { this.eacIndex(this.p3) ; this.read() ; this.mbr = (this.mbr + 0xFF) & 0xFF; this.write() ; this.a = this.mbr;this.cycles = this.cycles + 22; };
+private opcode_bb():void { this.fetch(); this.eacBasicIndex(this.p3) ; this.read() ; this.mbr = (this.mbr + 0xFF) & 0xFF; this.write() ; this.a = this.mbr;this.cycles = this.cycles + 22; };
 
 private opcode_bc():void { ;; };
 

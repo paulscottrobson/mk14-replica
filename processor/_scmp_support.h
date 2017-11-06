@@ -1,10 +1,14 @@
 static void inline fetch() {
  p0 = (p0+1) & 0xFFFF;
  mar = p0;
- read();
+ pcread();
 }
 static void inline eacIndex(WORD16 pp) {
  if (mbr == 0x80) mbr = e;
+ t16 = ((mbr & 0x80) != 0) ? (mbr | 0xFF00) : mbr;
+ mar = (pp & 0xF000) | ((pp+t16) & 0xFFF);
+}
+static void inline eacBasicIndex(WORD16 pp) {
  t16 = ((mbr & 0x80) != 0) ? (mbr | 0xFF00) : mbr;
  mar = (pp & 0xF000) | ((pp+t16) & 0xFFF);
 }
@@ -12,9 +16,9 @@ static WORD16 inline eacAutoIndex(WORD16 pp) {
  if (mbr == 0x80) mbr = e;
  if ((mbr & 0x80) == 0) {
   mar = pp;
-  t16 = (pp & 0xF000) | ((pp+t16) & 0xFFF);
+  t16 = (pp & 0xF000) | ((pp+mbr) & 0xFFF);
  } else {
-  t16 = (pp & 0xF000) | ((pp+t16) & 0xFFF);
+  t16 = (pp & 0xF000) | ((pp+(mbr|0xFF00)) & 0xFFF);
   mar = t16;
  }
  return t16;
@@ -40,10 +44,6 @@ static void inline binaryAdd() {
  }
  a = (t16 & 0xFF);
  cyl = (t16 >> 8) & 1;
-}
-static void inline jumpIndex(WORD16 pp) {
- t16 = ((mbr & 0x80) != 0) ? (mbr | 0xFF00) : mbr;
- mar = (pp & 0xF000) | ((pp+t16) & 0xFFF);
 }
 static void correctStatusRegister() {
  status = status & 0x0F;

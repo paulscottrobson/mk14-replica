@@ -287,37 +287,37 @@ case 0x8e: /** byte 8e **/
 case 0x8f: /** dly %c **/
    fetch();delaycyclesfour = (2 * a + (2 + 512)*mbr)/4;a = 0;cycles = cycles + 13;break;
 case 0x90: /** jmp %j **/
-   fetch();jumpIndex(p0) ; p0 = mar;cycles = cycles + 11;break;
+   fetch();eacBasicIndex(p0) ; p0 = mar;cycles = cycles + 11;break;
 case 0x91: /** jmp %j **/
-   fetch();jumpIndex(p1) ; p0 = mar;cycles = cycles + 11;break;
+   fetch();eacBasicIndex(p1) ; p0 = mar;cycles = cycles + 11;break;
 case 0x92: /** jmp %j **/
-   fetch();jumpIndex(p2) ; p0 = mar;cycles = cycles + 11;break;
+   fetch();eacBasicIndex(p2) ; p0 = mar;cycles = cycles + 11;break;
 case 0x93: /** jmp %j **/
-   fetch();jumpIndex(p3) ; p0 = mar;cycles = cycles + 11;break;
+   fetch();eacBasicIndex(p3) ; p0 = mar;cycles = cycles + 11;break;
 case 0x94: /** jp %j **/
-   fetch();jumpIndex(p0) ; if ((a & 0x80) == 0) p0 = mar;cycles = cycles + 10;break;
+   fetch();eacBasicIndex(p0) ; if ((a & 0x80) == 0) p0 = mar;cycles = cycles + 10;break;
 case 0x95: /** jp %j **/
-   fetch();jumpIndex(p1) ; if ((a & 0x80) == 0) p0 = mar;cycles = cycles + 10;break;
+   fetch();eacBasicIndex(p1) ; if ((a & 0x80) == 0) p0 = mar;cycles = cycles + 10;break;
 case 0x96: /** jp %j **/
-   fetch();jumpIndex(p2) ; if ((a & 0x80) == 0) p0 = mar;cycles = cycles + 10;break;
+   fetch();eacBasicIndex(p2) ; if ((a & 0x80) == 0) p0 = mar;cycles = cycles + 10;break;
 case 0x97: /** jp %j **/
-   fetch();jumpIndex(p3) ; if ((a & 0x80) == 0) p0 = mar;cycles = cycles + 10;break;
+   fetch();eacBasicIndex(p3) ; if ((a & 0x80) == 0) p0 = mar;cycles = cycles + 10;break;
 case 0x98: /** jz %j **/
-   fetch();jumpIndex(p0) ; if (a == 0) p0 = mar;cycles = cycles + 10;break;
+   fetch();eacBasicIndex(p0) ; if (a == 0) p0 = mar;cycles = cycles + 10;break;
 case 0x99: /** jz %j **/
-   fetch();jumpIndex(p1) ; if (a == 0) p0 = mar;cycles = cycles + 10;break;
+   fetch();eacBasicIndex(p1) ; if (a == 0) p0 = mar;cycles = cycles + 10;break;
 case 0x9a: /** jz %j **/
-   fetch();jumpIndex(p2) ; if (a == 0) p0 = mar;cycles = cycles + 10;break;
+   fetch();eacBasicIndex(p2) ; if (a == 0) p0 = mar;cycles = cycles + 10;break;
 case 0x9b: /** jz %j **/
-   fetch();jumpIndex(p3) ; if (a == 0) p0 = mar;cycles = cycles + 10;break;
+   fetch();eacBasicIndex(p3) ; if (a == 0) p0 = mar;cycles = cycles + 10;break;
 case 0x9c: /** jnz %j **/
-   fetch();jumpIndex(p0) ; if (a != 0) p0 = mar;cycles = cycles + 10;break;
+   fetch();eacBasicIndex(p0) ; if (a != 0) p0 = mar;cycles = cycles + 10;break;
 case 0x9d: /** jnz %j **/
-   fetch();jumpIndex(p1) ; if (a != 0) p0 = mar;cycles = cycles + 10;break;
+   fetch();eacBasicIndex(p1) ; if (a != 0) p0 = mar;cycles = cycles + 10;break;
 case 0x9e: /** jnz %j **/
-   fetch();jumpIndex(p2) ; if (a != 0) p0 = mar;cycles = cycles + 10;break;
+   fetch();eacBasicIndex(p2) ; if (a != 0) p0 = mar;cycles = cycles + 10;break;
 case 0x9f: /** jnz %j **/
-   fetch();jumpIndex(p3) ; if (a != 0) p0 = mar;cycles = cycles + 10;break;
+   fetch();eacBasicIndex(p3) ; if (a != 0) p0 = mar;cycles = cycles + 10;break;
 case 0xa0: /** byte a0 **/
    ;;break;
 case 0xa1: /** byte a1 **/
@@ -335,13 +335,13 @@ case 0xa6: /** byte a6 **/
 case 0xa7: /** byte a7 **/
    ;;break;
 case 0xa8: /** ild %d(p0) **/
-   eacIndex(p0) ; read() ; mbr = (mbr + 1) & 0xFF; write() ; a = mbr;cycles = cycles + 22;break;
+   fetch(); eacBasicIndex(p0) ; read() ; mbr = (mbr + 1) & 0xFF; write() ; a = mbr;cycles = cycles + 22;break;
 case 0xa9: /** ild %d(p1) **/
-   eacIndex(p1) ; read() ; mbr = (mbr + 1) & 0xFF; write() ; a = mbr;cycles = cycles + 22;break;
+   fetch(); eacBasicIndex(p1) ; read() ; mbr = (mbr + 1) & 0xFF; write() ; a = mbr;cycles = cycles + 22;break;
 case 0xaa: /** ild %d(p2) **/
-   eacIndex(p2) ; read() ; mbr = (mbr + 1) & 0xFF; write() ; a = mbr;cycles = cycles + 22;break;
+   fetch(); eacBasicIndex(p2) ; read() ; mbr = (mbr + 1) & 0xFF; write() ; a = mbr;cycles = cycles + 22;break;
 case 0xab: /** ild %d(p3) **/
-   eacIndex(p3) ; read() ; mbr = (mbr + 1) & 0xFF; write() ; a = mbr;cycles = cycles + 22;break;
+   fetch(); eacBasicIndex(p3) ; read() ; mbr = (mbr + 1) & 0xFF; write() ; a = mbr;cycles = cycles + 22;break;
 case 0xac: /** byte ac **/
    ;;break;
 case 0xad: /** byte ad **/
@@ -367,13 +367,13 @@ case 0xb6: /** byte b6 **/
 case 0xb7: /** byte b7 **/
    ;;break;
 case 0xb8: /** dld %d(p0) **/
-   eacIndex(p0) ; read() ; mbr = (mbr + 0xFF) & 0xFF; write() ; a = mbr;cycles = cycles + 22;break;
+   fetch(); eacBasicIndex(p0) ; read() ; mbr = (mbr + 0xFF) & 0xFF; write() ; a = mbr;cycles = cycles + 22;break;
 case 0xb9: /** dld %d(p1) **/
-   eacIndex(p1) ; read() ; mbr = (mbr + 0xFF) & 0xFF; write() ; a = mbr;cycles = cycles + 22;break;
+   fetch(); eacBasicIndex(p1) ; read() ; mbr = (mbr + 0xFF) & 0xFF; write() ; a = mbr;cycles = cycles + 22;break;
 case 0xba: /** dld %d(p2) **/
-   eacIndex(p2) ; read() ; mbr = (mbr + 0xFF) & 0xFF; write() ; a = mbr;cycles = cycles + 22;break;
+   fetch(); eacBasicIndex(p2) ; read() ; mbr = (mbr + 0xFF) & 0xFF; write() ; a = mbr;cycles = cycles + 22;break;
 case 0xbb: /** dld %d(p3) **/
-   eacIndex(p3) ; read() ; mbr = (mbr + 0xFF) & 0xFF; write() ; a = mbr;cycles = cycles + 22;break;
+   fetch(); eacBasicIndex(p3) ; read() ; mbr = (mbr + 0xFF) & 0xFF; write() ; a = mbr;cycles = cycles + 22;break;
 case 0xbc: /** byte bc **/
    ;;break;
 case 0xbd: /** byte bd **/

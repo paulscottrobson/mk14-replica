@@ -13,6 +13,11 @@
 #define _HARDWARE_H
 	
 void HWIReset(void);
+
+void HWIWriteSegment(BYTE8 digit,BYTE8 data);
+BYTE8 HWIReadSegment(BYTE8 digit);
+BYTE8 HWIReadKeyRow(BYTE8 row);
+
 int HWIProcessKey(int key,int runMode);
 void  HWIEndFrame(void);
 

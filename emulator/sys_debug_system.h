@@ -39,7 +39,7 @@
 #define DEBUG_RAMSTART 		(0)														// Initial RAM address for debugger.
 #define DEBUG_SHIFT(d,v)	((((d) << 4) | v) & 0xFFFF)								// Shifting into displayed address.
 
-#define DEBUG_KEYMAP(k,r) 	HWIProcessKey(k,r)										// Runtime can remap/process keys etc.
+#define DEBUG_KEYMAP(k,r) 	(k)														// Runtime can remap/process keys etc.
 
 void DBGXRender(int *address,int showCPU);											// Render the debugger screen.
 void DBGXRenderPanel(int *address,int showCPU);
